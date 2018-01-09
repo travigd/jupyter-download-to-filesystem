@@ -9,8 +9,6 @@ class RemoteFSDownloadHandler(RemoteFSBaseHandler):
     @gen.coroutine
     @web.authenticated
     def post(self, *args, **kwargs):
-        http_client = AsyncHTTPClient()
-        response: HTTPRequest
         parameters = json.loads(self.request.body)
         try:
             url = parameters['remote_url']
