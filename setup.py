@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='jupyter-download-to-filesystem',
+    name='jupyter-remotefs',
     version='',
     packages=setuptools.find_packages('.'),
     package_dir={'': '.'},
@@ -9,7 +9,7 @@ setup(
         'notebook',
         'tornado'
     ],
-    url='https://github.com/travigd/jupyter-download-to-filesystem',
+    url='https://github.com/travigd/jupyter-remotefs',
     license='All Rights Reserved',
     author='Travis G DePrato',
     author_email='travigd@umich.edu',
