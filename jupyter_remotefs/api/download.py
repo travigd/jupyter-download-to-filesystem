@@ -39,12 +39,12 @@ class RemoteFSDownloadHandler(RemoteFSBaseHandler):
         if model["type"] == "directory":
             children = model["content"]
             del model["content"]
-            print(f"saving directory {model['path']}")
-            print("children:", *[child['path'] for child in children])
+            print(f"remotefs: saving directory {model['path']}")
+            print("remotefs: children:", *[child['path'] for child in children])
             self.contents_manager.save(model, path=model["path"])
             for child in children:
                 self.save_unzipped_model(child)
         else:
             # model["type"] == "file"
-            print(f"saving file {model['path']}")
+            #print(f"saving file {model['path']}")
             self.contents_manager.save(model, path=model["path"])

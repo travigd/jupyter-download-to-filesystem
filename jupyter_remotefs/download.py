@@ -11,7 +11,15 @@ from tornado.httpclient import AsyncHTTPClient, HTTPResponse
 @gen.coroutine
 def download_as_model(url, *,
                       path: str,
-                      headers: dict):
+                      headers: dict) -> dict:
+    """
+    Download a file from a remote URL as a model dictionary.
+
+    :param url: remote url to download
+    :param path: local path to download
+    :param headers: dictionary of headers to include in request to url
+    :return: model dictionary
+    """
     if path.endswith('/'):
         raise ValueError('in call to download_as_model(), path cannot end '
                          'with a slash ("/")')
@@ -95,7 +103,54 @@ def construct_file_tree(file_paths: List[str]) -> dict:
     return tree
 
 
-def unzip_as_model(zipped_model: dict, model_path: str = "unzipped") -> dict:
+def wrap_in_parent_models(model: dict) -> dict:
+    """
+    Wrap a model in modified* Contents API format models.
+
+    For example,
+        {"path": "foo/bar",
+         "content": ...,
+         ...}
+    becomes
+        {"path": "foo",
+         "type": "directory",
+         "content": [
+            {"path": "foo/bar",
+             "content": ...,
+             ....}
+         }]}
+    :param model:
+    :return:
+    """
+    if model["path"].endswith("/"):
+        raise ValueError('path cannot end with slash ("/")')
+    # get all but final path components
+    # foo/bar/spam -> ["foo", "bar"]
+    parent_components = model["path"].split("/")[:-1]
+    parent = None
+    for component in parent_components:
+        child = {
+            'name': component,
+            'path': (parent["path"] + "/" + component if parent is not None
+                     else component),
+            'type': "directory",
+            'content': [],
+        }
+        if parent is not None:
+            parent['content'].append(child)
+        parent = child
+    if parent is not None:
+        parent['content'].append(model)
+    else:
+        # path actually had no upper components
+        # eg. model['path'] was only "foo"
+        parent = model
+    return parent
+
+
+def unzip_as_model(zipped_model: dict,
+                   model_path: str = "unzipped",
+                   make_dirs: bool = True) -> dict:
     """Unzip a zip file model into a modified* Contents API format.
 
     All files will be encoded as base64 binary data.
@@ -110,7 +165,6 @@ def unzip_as_model(zipped_model: dict, model_path: str = "unzipped") -> dict:
                         "base64")
     # decode binary from base64 and create ZipFile instance
     # StringIO required because ZipFile expects file-like-object
-    print(repr(zipped_model))
     zip_file = ZipFile(BytesIO(
         base64.b64decode(zipped_model["content"].encode('utf8'))))
     # top level model
@@ -178,4 +232,4 @@ def unzip_as_model(zipped_model: dict, model_path: str = "unzipped") -> dict:
                 # append file to list of parent directory contents
                 parent['content'].append(child)
                 parent = child
-    return tree
+    return wrap_in_parent_models(tree)
