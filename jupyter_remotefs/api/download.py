@@ -49,3 +49,4 @@ class RemoteFSDownloadHandler(RemoteFSBaseHandler):
             # model["type"] == "file"
             #print(f"saving file {model['path']}")
             yield gen.maybe_future(self.contents_manager.save(model, path=model["path"]))
+
