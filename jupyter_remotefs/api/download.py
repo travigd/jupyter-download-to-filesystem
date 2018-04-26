@@ -28,12 +28,13 @@ class RemoteFSDownloadHandler(RemoteFSBaseHandler):
             zipped_model = yield download_as_model(
                 url, path=path + ".zip", headers=headers)
             model = unzip_as_model(zipped_model, model_path=path)
-            self.save_unzipped_model(model)
+            yield @gen.maybe_future(self.save_unzipped_model(model))
             self.finish(json.dumps({"message": "ok"}))
         else:
             raise web.HTTPError(400, json.dumps(
                 {'message': f"invalid unzip value: {unzip}"}))
 
+    @gen.coroutine
     def save_unzipped_model(self, model):
         """Save a model in the format returned by unzip_as_model."""
         if model["type"] == "directory":
@@ -41,10 +42,10 @@ class RemoteFSDownloadHandler(RemoteFSBaseHandler):
             del model["content"]
             print(f"remotefs: saving directory {model['path']}")
             print("remotefs: children:", *[child['path'] for child in children])
-            self.contents_manager.save(model, path=model["path"])
+            yield @gen.maybe_future(self.contents_manager.save(model, path=model["path"]))
             for child in children:
-                self.save_unzipped_model(child)
+                yield @gen.maybe_future(self.save_unzipped_model(child))
         else:
             # model["type"] == "file"
             #print(f"saving file {model['path']}")
-            self.contents_manager.save(model, path=model["path"])
+            yield @gen.maybe_future(self.contents_manager.save(model, path=model["path"]))
