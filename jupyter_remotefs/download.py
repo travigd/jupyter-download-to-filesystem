@@ -204,10 +204,14 @@ def unzip_as_model(zipped_model: dict,
                 # ex. when processing foo/bar/spam and foo/bar/eggs, we only
                 # create bar on the foo/bar/spam iteration and not the
                 # foo/bar/eggs iteration
+                outer_continue = False
                 for child in parent['content']:
                     if child['name'] == component.rstrip('/'):
                         parent = child
-                        continue
+                        outer_continue = True
+                        break
+                if outer_continue:
+                    continue
                 child = {
                     'name': component.rstrip('/'),
                     'path': os.path.join(parent['path'], component.rstrip('/')),
